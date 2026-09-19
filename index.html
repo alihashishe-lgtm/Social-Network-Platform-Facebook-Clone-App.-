@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Samir Connect</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Tahoma,Arial;background:#eef2f7;color:#182033}
+header{height:66px;background:#fff;border-bottom:1px solid #ddd;display:flex;align-items:center;gap:12px;padding:0 5%;position:sticky;top:0;z-index:5}.logo{font-size:24px;font-weight:900;color:#1769e0}.search{flex:1;max-width:430px;border:0;background:#f1f3f6;border-radius:25px;padding:12px 17px;outline:0}
+.nav button,.mini{border:0;background:#f1f3f6;border-radius:50%;width:42px;height:42px;cursor:pointer}.login{border:0;background:#1769e0;color:#fff;padding:10px 15px;border-radius:9px;cursor:pointer}
+main{max-width:1180px;margin:22px auto;display:grid;grid-template-columns:230px minmax(0,650px) 240px;gap:18px;padding:0 14px}.card{background:#fff;border-radius:14px;box-shadow:0 2px 8px #00000012;margin-bottom:16px;overflow:hidden}.side{padding:12px}.side button,.action{display:block;width:100%;border:0;background:#fff;text-align:right;padding:13px;border-radius:9px;cursor:pointer}.side button:hover{background:#f1f3f7}.avatar{width:44px;height:44px;border-radius:50%;background:#1769e0;color:#fff;display:grid;place-items:center;font-weight:bold}.user{display:flex;align-items:center;gap:10px;padding:10px}
+.composer{padding:15px}.compose{display:flex;gap:10px}.compose textarea{flex:1;height:48px;resize:none;border:0;background:#f1f3f6;border-radius:25px;padding:13px;outline:0}.toolbar{border-top:1px solid #eee;margin-top:12px;padding-top:10px;display:flex;gap:7px}.primary{background:#1769e0!important;color:#fff!important;text-align:center!important}
+.post{padding:16px}.posthead{display:flex;align-items:center;gap:10px}.muted{color:#7b8494;font-size:13px}.post p{line-height:1.8;margin:14px 0}.stats{border-bottom:1px solid #eee;padding:9px 0;color:#737b88;display:flex;justify-content:space-between}.postbuttons{display:flex;justify-content:space-around;padding-top:8px}.postbuttons button{border:0;background:#fff;padding:9px 25px;border-radius:8px;cursor:pointer}.trend{padding:11px 0;border-bottom:1px solid #eee}
+.modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:20}.box{background:#fff;padding:22px;border-radius:16px;width:min(430px,92%)}.box input{width:100%;padding:12px;margin:7px 0;border:1px solid #ddd;border-radius:9px}.box button{padding:11px 18px;border:0;border-radius:9px;margin-top:8px;cursor:pointer}.close{float:left;background:#eee}.tabs{display:flex;gap:6px;margin:8px 0}.tabs button{flex:1;border:0;padding:9px;border-radius:8px;cursor:pointer}.hidden{display:none}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#182033;color:#fff;padding:12px 18px;border-radius:25px;display:none;z-index:30}
+@media(max-width:900px){main{grid-template-columns:1fr}.left,.right{display:none}header{padding:0 10px}.search{max-width:none}.nav{display:none}}
+</style>
+</head>
+<body>
+<header><div class="logo">Samir Connect</div><input id="search" class="search" placeholder="ابحث في المنشورات..."><div class="nav"><button onclick="toast('💬 افتح الرسائل بعد تسجيل الدخول')">💬</button><button onclick="toast('🔔 الإشعارات')">🔔</button></div><button id="authBtn" class="login" onclick="openAuth()">دخول / إنشاء حساب</button></header>
+<main>
+<aside class="left"><div class="card side"><div id="me" class="user"><div class="avatar">ز</div><b>زائر</b></div><button>🏠 الرئيسية</button><button>👤 ملفي الشخصي</button><button>👥 الأصدقاء</button><button>💬 الرسائل</button><button>🔔 الإشعارات</button><button onclick="logout()">🚪 تسجيل الخروج</button></div></aside>
+<section><div class="card composer"><div class="compose"><div id="composeAvatar" class="avatar">ز</div><textarea id="text" placeholder="سجّل الدخول لكتابة منشور"></textarea></div><div class="toolbar"><button class="action primary" onclick="publish()">نشر</button></div></div><div id="posts"><div class="card post"><b>مرحبًا 👋</b><p class="muted">سجّل حسابًا لتبدأ نشر المحتوى والتفاعل مع المستخدمين.</p></div></div></section>
+<aside class="right"><div class="card" style="padding:15px"><h3>🔥 Samir Connect</h3><div class="trend">مجتمع اجتماعي حقيقي</div><div class="trend">حسابات ومنشورات مشتركة</div><div class="trend">تفاعل مباشر</div></div></aside>
+</main>
+<footer style="text-align:center;color:#778092;padding:20px">© 2026 Samir Connect — تنفيذ البشمهندس علي سمير</footer>
+
+<div id="modal" class="modal"><div class="box"><button class="close" onclick="closeAuth()">✕</button><h2 id="modalTitle">إنشاء حساب</h2>
+<div class="tabs"><button onclick="mode('signup')">إنشاء حساب</button><button onclick="mode('login')">دخول</button></div>
+<input id="email" type="email" placeholder="البريد الإلكتروني"><input id="password" type="password" placeholder="كلمة المرور"><input id="name" placeholder="الاسم (لإنشاء الحساب)">
+<button class="primary" style="width:100%" onclick="submitAuth()">متابعة</button><p class="muted">الحسابات والبيانات تحفظ في قاعدة البيانات المشتركة.</p></div></div>
+<div id="toast"></div>
+<script>
+/* ضع بيانات مشروع Supabase هنا فقط */
+const SUPABASE_URL = "PUT_YOUR_SUPABASE_URL_HERE";
+const SUPABASE_ANON_KEY = "PUT_YOUR_SUPABASE_ANON_KEY_HERE";
+let sb=null, modeNow='signup', session=null;
+
+if(!SUPABASE_URL.includes('PUT_')) sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+async function init(){
+ if(!sb){render();return}
+ const r=await sb.auth.getSession(); session=r.data.session;
+ sb.auth.onAuthStateChange((_e,s)=>{session=s;render();loadPosts()});
+ render(); loadPosts();
+}
+function render(){
+ const email=session?.user?.email||'', name=session?.user?.user_metadata?.name||email.split('@')[0]||'زائر';
+ document.getElementById('me').innerHTML='<div class="avatar">'+safe(name[0]||'ز')+'</div><b>'+safe(name)+'</b>';
+ document.getElementById('composeAvatar').textContent=name[0]||'ز';
+ document.getElementById('authBtn').textContent=session?'حسابي':'دخول / إنشاء حساب';
+}
+async function loadPosts(){
+ const box=document.getElementById('posts');
+ if(!sb){box.innerHTML='<div class="card post"><b>وضع المعاينة</b><p class="muted">أضف بيانات Supabase في أعلى الملف لتفعيل المستخدمين الحقيقيين.</p></div>';return}
+ const {data,error}=await sb.from('posts').select('id,content,created_at,user_id').order('created_at',{ascending:false}).limit(50);
+ if(error){box.innerHTML='<div class="card post"><b>تعذر تحميل المنشورات</b><p class="muted">'+safe(error.message)+'</p></div>';return}
+ box.innerHTML=data.length?'':'<div class="card post"><p>لا توجد منشورات بعد. كن أول من ينشر 🚀</p></div>';
+ data.forEach(p=>{let a=document.createElement('article');a.className='card post';let name='مستخدم';a.innerHTML='<div class="posthead"><div class="avatar">م</div><div><b>'+name+'</b><div class="muted">'+new Date(p.created_at).toLocaleString('ar-EG')+'</div></div></div><p>'+safe(p.content)+'</p><div class="stats"><span>❤️ تفاعل</span><span>💬 تعليق</span></div><div class="postbuttons"><button onclick="toast(\'❤️ سيتم ربط الإعجاب بالجدول التالي\')">👍 إعجاب</button><button onclick="toast(\'💬 سيتم ربط التعليقات بالجدول التالي\')">💬 تعليق</button></div>';box.appendChild(a)})
+}
+async function publish(){
+ if(!session)return openAuth();
+ const text=document.getElementById('text').value.trim(); if(!text)return toast('✍️ اكتب منشورك');
+ const {error}=await sb.from('posts').insert({user_id:session.user.id,content:text});
+ if(error)return toast('❌ '+error.message);
+ document.getElementById('text').value='';toast('✅ تم نشر المنشور');loadPosts();
+}
+function mode(m){modeNow=m;document.getElementById('modalTitle').textContent=m==='signup'?'إنشاء حساب':'تسجيل الدخول';document.getElementById('name').style.display=m==='signup'?'block':'none'}
+function openAuth(){document.getElementById('modal').style.display='flex';mode(session?'login':'signup')}
+function closeAuth(){document.getElementById('modal').style.display='none'}
+async function submitAuth(){
+ if(!sb)return toast('أضف بيانات Supabase أولًا');
+ let email=document.getElementById('email').value.trim(),password=document.getElementById('password').value,name=document.getElementById('name').value.trim();
+ if(!email||!password)return toast('أدخل البريد وكلمة المرور');
+ let r=modeNow==='signup'?await sb.auth.signUp({email,password,options:{data:{name:name||'مستخدم'}}}):await sb.auth.signInWithPassword({email,password});
+ if(r.error)return toast('❌ '+r.error.message);
+ closeAuth();toast(modeNow==='signup'?'✅ تم إنشاء الحساب':'✅ تم تسجيل الدخول');loadPosts();
+}
+async function logout(){if(sb)await sb.auth.signOut();session=null;render();loadPosts();toast('تم تسجيل الخروج')}
+function safe(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function toast(t){let x=document.getElementById('toast');x.textContent=t;x.style.display='block';clearTimeout(window.tt);window.tt=setTimeout(()=>x.style.display='none',2200)}
+init();
+</script>
+</body></html>
